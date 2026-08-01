@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__claude_ai_Supabase__list_projects",
+      "Bash(npm -v)",
+      "Bash(node -p \"process.arch + ' ' + process.platform\")",
+      "Bash(node -e \"try{require\\('./node_modules/@swc/core-win32-x64-msvc/swc.win32-x64-msvc.node'\\)}catch\\(e\\){console.log\\('ERR:',e.message\\)}\")",
+      "Bash(node -p \"require\\('c:/cunga-stock-v1/node_modules/@swc/core/package.json'\\).version\")",
+      "Bash(node -p \"require\\('c:/cunga-stock-v1/node_modules/@swc/core-win32-x64-msvc/package.json'\\).version\")",
+      "Bash(rm -rf node_modules/@swc)",
+      "Bash(npm install *)",
+      "Bash(node -e \"try{require\\('./node_modules/@swc/core-win32-x64-msvc/swc.win32-x64-msvc.node'\\);console.log\\('BINDING OK'\\)}catch\\(e\\){console.log\\('ERR:',e.message\\)}\")",
+      "Bash(timeout 40 npx vite --port 5199)",
+      "Bash(curl *)",
+      "Bash(pkill -f \"vite --port 5203\")",
+      "Bash(npx tsc *)",
+      "PowerShell(w32tm *)",
+      "PowerShell(try { Start-Service w32time -ErrorAction Stop; \"service started\" } catch { \"could not start service: \" + $_.Exception.Message })"
+    ]
+  }
+}
