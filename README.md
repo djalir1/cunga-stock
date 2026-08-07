@@ -1,5 +1,22 @@
 # Welcome to your Lovable project
 
+## Duplicating this project (new school / new database)
+
+1. Create a new Supabase project.
+2. Open **SQL Editor**, paste the whole of [`supabase/FULL_SCHEMA.sql`](supabase/FULL_SCHEMA.sql), and run it.
+   It creates every table, function, trigger, RLS policy and seed row the app needs, and it is
+   safe to run more than once.
+3. **Settings → API → Reload schema cache.**
+4. Copy `.env.example` to `.env` and fill in the new project's URL and anon key.
+5. Sign up the first user in the app, then promote them to admin:
+   ```sql
+   UPDATE public.user_roles SET role = 'admin'
+    WHERE user_id = (SELECT id FROM auth.users WHERE email = 'you@example.com');
+   ```
+
+`supabase/migrations/` holds the incremental history. `supabase/FULL_SCHEMA.sql` is the
+consolidated, always-current version — prefer it for a fresh database.
+
 ## Project info
 
 **URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID

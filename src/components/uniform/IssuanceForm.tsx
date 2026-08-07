@@ -87,6 +87,10 @@ export const IssuanceForm = ({ uniforms, onIssue }: IssuanceFormProps) => {
       const msg = error?.message || '';
       if (msg.includes('unique') || msg.includes('duplicate')) {
         toast({ title: 'Duplicate Sweater Number', description: `Sweater #${sweaterNumber} is already assigned to someone.`, variant: 'destructive' });
+      } else if (msg.includes('Not enough stock')) {
+        // Raised by the uniform_issuance_guard_trg database trigger — the real
+        // stock level at the moment of writing, not the possibly-stale UI value.
+        toast({ title: 'Insufficient Stock', description: msg, variant: 'destructive' });
       } else {
         toast({ title: 'Error', description: 'Could not process issuance.', variant: 'destructive' });
       }

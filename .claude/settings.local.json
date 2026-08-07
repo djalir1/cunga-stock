@@ -15,7 +15,9 @@
       "Bash(pkill -f \"vite --port 5203\")",
       "Bash(npx tsc *)",
       "PowerShell(w32tm *)",
-      "PowerShell(try { Start-Service w32time -ErrorAction Stop; \"service started\" } catch { \"could not start service: \" + $_.Exception.Message })"
+      "PowerShell(try { Start-Service w32time -ErrorAction Stop; \"service started\" } catch { \"could not start service: \" + $_.Exception.Message })",
+      "PowerShell(npx tsc --noEmit -p tsconfig.app.json)",
+      "PowerShell(npm run *)"
     ]
   }
 }

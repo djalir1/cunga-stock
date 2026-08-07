@@ -40,7 +40,7 @@ import { UniformItem, UniformCategory } from '@/types/uniform';
 interface InventorySectionProps {
   uniforms: UniformItem[];
   categories: UniformCategory[];
-  onAddUniform?: (uniform: Omit<UniformItem, 'id' | 'remainingQuantity'>) => void;
+  onAddUniform?: (uniform: Omit<UniformItem, 'id' | 'remainingQuantity' | 'issuedQuantity'>) => void;
   onUpdateUniform?: (id: string, updates: Partial<UniformItem>) => void;
   onDeleteUniform?: (id: string) => void;
   onAddCategory?: (name: string) => void;
@@ -103,9 +103,12 @@ export const InventorySection = ({
   const handleRestock = () => {
     const amount = parseInt(restockAmount);
     if (onUpdateUniform && restockItem && amount > 0) {
+      const newTotal = restockItem.totalQuantity + amount;
       onUpdateUniform(restockItem.id, {
-        totalQuantity: restockItem.totalQuantity + amount,
-        remainingQuantity: restockItem.remainingQuantity + amount
+        totalQuantity: newTotal,
+        // The DB recalculates this anyway; sending the correct value keeps the
+        // optimistic render right and matches what the trigger will store.
+        remainingQuantity: newTotal - restockItem.issuedQuantity,
       });
       setIsRestockOpen(false);
       setRestockAmount('0');
@@ -124,6 +127,7 @@ export const InventorySection = ({
   };
 
   const getStockStatus = (remaining: number, total: number) => {
+    if (total <= 0) return 'text-muted-foreground font-mono';
     const percentage = (remaining / total) * 100;
     if (percentage <= 10) return 'text-red-600 font-bold';
     if (percentage <= 30) return 'text-amber-600 font-semibold';
@@ -166,9 +170,9 @@ export const InventorySection = ({
             <TableRow>
               <TableHead>Uniform Name</TableHead>
               <TableHead>Category</TableHead>
-              <TableHead className="text-center">Total Stock</TableHead>
-              <TableHead className="text-center">Remaining</TableHead>
+              <TableHead className="text-center">Total Added</TableHead>
               <TableHead className="text-center">Issued</TableHead>
+              <TableHead className="text-center">Remaining</TableHead>
               {!isReadOnly && <TableHead className="text-right">Actions</TableHead>}
             </TableRow>
           </TableHeader>
@@ -182,11 +186,11 @@ export const InventorySection = ({
                   </span>
                 </TableCell>
                 <TableCell className="text-center font-mono">{uniform.totalQuantity}</TableCell>
+                <TableCell className="text-center font-mono text-muted-foreground">
+                  {uniform.issuedQuantity}
+                </TableCell>
                 <TableCell className={`text-center font-mono ${getStockStatus(uniform.remainingQuantity, uniform.totalQuantity)}`}>
                   {uniform.remainingQuantity}
-                </TableCell>
-                <TableCell className="text-center font-mono text-muted-foreground">
-                  {uniform.totalQuantity - uniform.remainingQuantity}
                 </TableCell>
                 
                 {!isReadOnly && (
@@ -231,14 +235,42 @@ export const InventorySection = ({
               </DialogTitle>
             </DialogHeader>
             <div className="py-4 space-y-4">
+              {restockItem && (
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  {[
+                    { label: 'Total Added', value: restockItem.totalQuantity },
+                    { label: 'Issued', value: restockItem.issuedQuantity },
+                    { label: 'Remaining', value: restockItem.remainingQuantity },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="rounded-md bg-muted p-2">
+                      <div className="text-xs text-muted-foreground">{label}</div>
+                      <div className="font-mono font-semibold">{value}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="space-y-2">
                 <Label>Quantity to Add</Label>
                 <Input
                   type="number"
+                  min="1"
                   value={restockAmount}
                   onChange={(e) => setRestockAmount(e.target.value)}
                 />
               </div>
+              {restockItem && parseInt(restockAmount) > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  After restock:{' '}
+                  <span className="font-mono font-medium text-foreground">
+                    {restockItem.totalQuantity + parseInt(restockAmount)}
+                  </span>{' '}
+                  total,{' '}
+                  <span className="font-mono font-medium text-foreground">
+                    {restockItem.remainingQuantity + parseInt(restockAmount)}
+                  </span>{' '}
+                  remaining.
+                </p>
+              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsRestockOpen(false)}>Cancel</Button>

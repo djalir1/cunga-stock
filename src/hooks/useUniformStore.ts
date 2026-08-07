@@ -22,13 +22,20 @@ export const useUniformStore = () => {
     queryFn: async () => {
       const { data, error } = await supabase.from('uniform_items').select('*').order('name');
       if (error) throw error;
-      return data.map((u: any) => ({
-        id: u.id,
-        name: u.name,
-        category: u.category,
-        totalQuantity: u.total_quantity,
-        remainingQuantity: u.remaining_quantity
-      })) as UniformItem[];
+      return data.map((u: any) => {
+        const total = u.total_quantity ?? 0;
+        // issued_quantity is maintained by the DB. The fallback only matters on a
+        // database where the stock-tracking migration hasn't been run yet.
+        const issued = u.issued_quantity ?? Math.max(total - (u.remaining_quantity ?? 0), 0);
+        return {
+          id: u.id,
+          name: u.name,
+          category: u.category,
+          totalQuantity: total,
+          issuedQuantity: issued,
+          remainingQuantity: Math.max(total - issued, 0),
+        };
+      }) as UniformItem[];
     }
   });
 
@@ -110,6 +117,15 @@ export const useUniformStore = () => {
       queryClient.invalidateQueries({ queryKey: ['uniform-items'] });
       // Also refresh issuances so report categories reflect any category rename
       queryClient.invalidateQueries({ queryKey: ['uniform-issuances'] });
+    },
+    onError: (error: any) => {
+      const msg = error?.message || '';
+      toast({
+        title: "Error",
+        // e.g. lowering total stock below what has already been issued
+        description: msg.includes('already been issued') ? msg : "Could not update the item.",
+        variant: "destructive"
+      });
     }
   });
 
@@ -129,7 +145,17 @@ export const useUniformStore = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['uniform-issuances'] });
       queryClient.invalidateQueries({ queryKey: ['uniform-items'] });
+      queryClient.invalidateQueries({ queryKey: ['uniform-movements'] });
       toast({ title: "Success", description: "Record updated" });
+    },
+    onError: (error: any) => {
+      const msg = error?.message || '';
+      toast({
+        title: "Error",
+        // The database rejects an edit that would issue more than exists.
+        description: msg.includes('Not enough stock') ? msg : "Could not update record.",
+        variant: "destructive"
+      });
     }
   });
 
@@ -139,8 +165,10 @@ export const useUniformStore = () => {
       if (error) throw error;
     },
     onSuccess: () => {
+      // Deleting an issuance returns the items to stock (handled by the DB trigger).
       queryClient.invalidateQueries({ queryKey: ['uniform-issuances'] });
       queryClient.invalidateQueries({ queryKey: ['uniform-items'] });
+      queryClient.invalidateQueries({ queryKey: ['uniform-movements'] });
     }
   });
 
@@ -202,6 +230,8 @@ export const useUniformStore = () => {
       };
       if (sweaterNumber) insertData.sweater_number = sweaterNumber;
       const { error } = await supabase.from('uniform_issuances').insert([insertData]);
+      // Stock is decremented by the database (uniform_issuance_sync_trg), never here —
+      // doing it client-side too is what made "Remaining" drift.
       if (error) throw error;
     },
     onSuccess: () => {

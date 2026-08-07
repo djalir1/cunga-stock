@@ -8,8 +8,12 @@ export interface UniformItem {
   id: string;
   name: string;
   category: string;
+  /** Everything ever added to stock (initial quantity + all restocks). */
   totalQuantity: number;
+  /** total - issued. Maintained by the database, never by the client. */
   remainingQuantity: number;
+  /** SUM of quantity_taken across this item's issuances. From the database. */
+  issuedQuantity: number;
 }
 
 export interface IssuedUniform {
