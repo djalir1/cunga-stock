@@ -97,7 +97,7 @@ export default function Settings() {
               </p>
               <Badge variant="outline" className="capitalize">
                 <Shield className="w-3 h-3 mr-1" />
-                {role || 'storekeeper'}
+                {role || 'supervisor'}
               </Badge>
             </div>
           </div>

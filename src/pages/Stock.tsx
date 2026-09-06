@@ -19,7 +19,8 @@ export default function Stock() {
   const { categories } = useCategories();
   const { role } = useAuth();
 
-  const isKeeper = role === 'storekeeper';
+  // Admins and storekeepers can mutate; supervisors are view-only.
+  const canEdit = role === 'admin' || role === 'storekeeper';
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -48,7 +49,7 @@ export default function Stock() {
   });
 
   const handleAddItem = () => {
-    if (!newItem.name || !newItem.quantity || !isKeeper) return;
+    if (!newItem.name || !newItem.quantity || !canEdit) return;
     addItem.mutate({
       name: newItem.name,
       category_id: newItem.category_id || null,
@@ -68,7 +69,7 @@ export default function Stock() {
 
   const handleIssueConfirm = () => {
     const qty = Number(issueQuantity);
-    if (!selectedIssueItemId || qty <= 0 || !isKeeper) return;
+    if (!selectedIssueItemId || qty <= 0 || !canEdit) return;
     issueItem.mutate({ id: selectedIssueItemId, quantity: qty, recipient: issueRecipient.trim() || undefined }, {
       onSuccess: () => {
         setIsIssueDialogOpen(false);
@@ -86,7 +87,7 @@ export default function Stock() {
 
   const handleRestockConfirm = () => {
     const qty = Number(restockQuantity);
-    if (!selectedRestockItemId || qty <= 0 || !isKeeper) return;
+    if (!selectedRestockItemId || qty <= 0 || !canEdit) return;
     returnItem.mutate({ id: selectedRestockItemId, quantity: qty }, {
       onSuccess: () => {
         setIsRestockDialogOpen(false);
@@ -111,7 +112,7 @@ export default function Stock() {
           <h1 className="text-3xl font-bold tracking-tight">Stock Inventory</h1>
           <div className="flex items-center gap-2 mt-1">
             <p className="text-muted-foreground">Monitor and manage warehouse levels</p>
-            {!isKeeper && (
+            {!canEdit && (
               <Badge variant="outline" className="text-blue-500 border-blue-500/30 gap-1">
                 <ShieldCheck className="w-3 h-3" /> View Only
               </Badge>
@@ -119,7 +120,7 @@ export default function Stock() {
           </div>
         </div>
 
-        {isKeeper && (
+        {canEdit && (
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2"><Plus className="w-4 h-4" /> Add Item</Button>
@@ -199,7 +200,7 @@ export default function Stock() {
                   <TableHead className="text-center">Issued</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Updated</TableHead>
-                  {isKeeper && <TableHead className="text-right">Actions</TableHead>}
+                  {canEdit && <TableHead className="text-right">Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -224,7 +225,7 @@ export default function Stock() {
                       {formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}
                     </TableCell>
 
-                    {isKeeper && (
+                    {canEdit && (
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
                           <Button

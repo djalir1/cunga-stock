@@ -49,7 +49,8 @@ function ComingSoon() {
 
 function TemporaryStockContent() {
   const { role } = useAuth();
-  const isKeeper = role === 'storekeeper';
+  // Admins and storekeepers can mutate; supervisors are view-only.
+  const canEdit = role === 'admin' || role === 'storekeeper';
   const today = new Date().toISOString().slice(0, 10);
 
   const {
@@ -211,14 +212,14 @@ function TemporaryStockContent() {
           <h1 className="text-3xl font-bold tracking-tight">Temporary Stock</h1>
           <div className="flex items-center gap-2 mt-1">
             <p className="text-muted-foreground">Items temporarily lent to teachers</p>
-            {!isKeeper && (
+            {!canEdit && (
               <Badge variant="outline" className="text-blue-500 border-blue-500/30 gap-1">
                 <ShieldCheck className="w-3 h-3" /> View Only
               </Badge>
             )}
           </div>
         </div>
-        {isKeeper && (
+        {canEdit && (
           <Button className="gap-2" onClick={() => setIsAddItemOpen(true)}>
             <Plus className="w-4 h-4" /> Add Item
           </Button>
@@ -274,7 +275,7 @@ function TemporaryStockContent() {
               ) : items.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                  <p>No items yet. {isKeeper && 'Click "Add Item" to get started.'}</p>
+                  <p>No items yet. {canEdit && 'Click "Add Item" to get started.'}</p>
                 </div>
               ) : (
                 <Table>
@@ -285,7 +286,7 @@ function TemporaryStockContent() {
                       <TableHead className="text-center">Total</TableHead>
                       <TableHead className="text-center">Available</TableHead>
                       <TableHead className="text-center">Out</TableHead>
-                      {isKeeper && <TableHead className="text-right">Actions</TableHead>}
+                      {canEdit && <TableHead className="text-right">Actions</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -302,7 +303,7 @@ function TemporaryStockContent() {
                         <TableCell className="text-center font-mono text-rose-600">
                           {item.total_quantity - item.available_quantity}
                         </TableCell>
-                        {isKeeper && (
+                        {canEdit && (
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
                               <Button
@@ -358,7 +359,7 @@ function TemporaryStockContent() {
                       <TableHead>Borrowed</TableHead>
                       <TableHead>Expected Return</TableHead>
                       <TableHead>Notes</TableHead>
-                      {isKeeper && <TableHead className="text-right">Actions</TableHead>}
+                      {canEdit && <TableHead className="text-right">Actions</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -388,7 +389,7 @@ function TemporaryStockContent() {
                           ) : <span className="text-muted-foreground">—</span>}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground max-w-[120px] truncate">{loan.notes || '—'}</TableCell>
-                        {isKeeper && (
+                        {canEdit && (
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
                               <Button
@@ -437,7 +438,7 @@ function TemporaryStockContent() {
                       <TableHead>Borrowed</TableHead>
                       <TableHead>Returned</TableHead>
                       <TableHead>Notes</TableHead>
-                      {isKeeper && <TableHead className="text-right">Actions</TableHead>}
+                      {canEdit && <TableHead className="text-right">Actions</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -450,7 +451,7 @@ function TemporaryStockContent() {
                         <TableCell className="text-sm">{fmtDate(loan.borrowed_date)}</TableCell>
                         <TableCell className="text-sm text-green-600 font-medium">{fmtDate(loan.actual_return_date)}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">{loan.notes || '—'}</TableCell>
-                        {isKeeper && (
+                        {canEdit && (
                           <TableCell className="text-right">
                             <Button size="icon" variant="ghost" className="text-destructive hover:bg-destructive/10"
                               onClick={() => setDeleteLoanConfirmId(loan.id)}>

@@ -24,7 +24,8 @@ interface IssuanceFormProps {
 export const IssuanceForm = ({ uniforms, onIssue }: IssuanceFormProps) => {
   const { toast } = useToast();
   const { role } = useAuth();
-  const isKeeper = role === 'storekeeper';
+  // Admins and storekeepers can mutate; supervisors are view-only.
+  const canEdit = role === 'admin' || role === 'storekeeper';
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [studentName, setStudentName] = useState('');
@@ -50,7 +51,7 @@ export const IssuanceForm = ({ uniforms, onIssue }: IssuanceFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!isKeeper || !onIssue) {
+    if (!canEdit || !onIssue) {
       toast({
         title: 'Access Denied',
         description: 'Supervisors do not have permission to issue items.',
@@ -100,7 +101,7 @@ export const IssuanceForm = ({ uniforms, onIssue }: IssuanceFormProps) => {
   };
 
   return (
-    <div className={`bg-card rounded-lg border shadow-sm p-6 ${!isKeeper ? 'opacity-80' : ''}`}>
+    <div className={`bg-card rounded-lg border shadow-sm p-6 ${!canEdit ? 'opacity-80' : ''}`}>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-lg">
@@ -108,7 +109,7 @@ export const IssuanceForm = ({ uniforms, onIssue }: IssuanceFormProps) => {
           </div>
           <h2 className="text-xl font-semibold">Issue Uniform</h2>
         </div>
-        {!isKeeper && (
+        {!canEdit && (
           <div className="flex items-center gap-1 text-amber-600 bg-amber-50 px-3 py-1 rounded-full text-xs font-bold border border-amber-200">
             <ShieldAlert className="h-3 w-3" /> READ ONLY
           </div>
@@ -116,7 +117,7 @@ export const IssuanceForm = ({ uniforms, onIssue }: IssuanceFormProps) => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <fieldset disabled={!isKeeper} className="space-y-4">
+        <fieldset disabled={!canEdit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="studentName">Student Name</Label>
@@ -124,7 +125,7 @@ export const IssuanceForm = ({ uniforms, onIssue }: IssuanceFormProps) => {
                 id="studentName"
                 value={studentName}
                 onChange={(e) => setStudentName(e.target.value)}
-                placeholder={isKeeper ? 'e.g. John Doe' : 'Restricted access'}
+                placeholder={canEdit ? 'e.g. John Doe' : 'Restricted access'}
               />
             </div>
 
@@ -212,14 +213,14 @@ export const IssuanceForm = ({ uniforms, onIssue }: IssuanceFormProps) => {
         <Button
           type="submit"
           className="w-full"
-          disabled={!isKeeper || isSubmitting || (!!selectedUniformId && availableStock === 0)}
+          disabled={!canEdit || isSubmitting || (!!selectedUniformId && availableStock === 0)}
         >
           {isSubmitting ? (
             <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</>
-          ) : isKeeper ? (
+          ) : canEdit ? (
             'Confirm Issuance'
           ) : (
-            'Storekeeper Only'
+            'Read Only'
           )}
         </Button>
       </form>

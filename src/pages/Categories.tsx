@@ -29,24 +29,24 @@ export default function Categories() {
   const [newCategory, setNewCategory] = useState({ name: '', description: '', color: '#3B82F6' });
   const [editData, setEditData] = useState({ name: '', description: '', color: '#3B82F6' });
 
-  // Safety check: Prevents supervisor from triggering mutation even if they find a way to click
-  const isKeeper = role === 'storekeeper';
+  // Admins and storekeepers can mutate; supervisors are view-only.
+  const canEdit = role === 'admin' || role === 'storekeeper';
 
   const handleAddCategory = () => {
-    if (!newCategory.name || !isKeeper) return;
+    if (!newCategory.name || !canEdit) return;
     addCategory.mutate(newCategory);
     setNewCategory({ name: '', description: '', color: '#3B82F6' });
     setIsAddOpen(false);
   };
 
   const handleEditCategory = (id: string) => {
-    if (!isKeeper) return;
+    if (!canEdit) return;
     updateCategory.mutate({ id, ...editData });
     setEditingCategory(null);
   };
 
   const handleDeleteCategory = (id: string) => {
-    if (!isKeeper) return;
+    if (!canEdit) return;
     setDeletingCategoryId(id);
   };
 
@@ -68,7 +68,7 @@ export default function Categories() {
         </div>
 
         {/* 3. Wrap "Add Category" in a role check */}
-        {isKeeper && (
+        {canEdit && (
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2"><Plus className="w-4 h-4" /> Add Category</Button>
@@ -149,7 +149,7 @@ export default function Categories() {
                     </div>
 
                     {/* 4. Wrap Edit/Delete buttons in role check */}
-                    {isKeeper && (
+                    {canEdit && (
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button size="icon" variant="ghost" onClick={() => openEditDialog(category)}>
                           <Edit className="w-4 h-4" />

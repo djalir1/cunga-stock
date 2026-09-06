@@ -113,7 +113,7 @@ const INDUSTRIES = [
     features: [
       'Issue uniforms & sweaters to students',
       'Track sweater numbers and sizes',
-      'Storekeeper & supervisor roles',
+      'Admin, storekeeper & supervisor roles',
       'Term-by-term issuance reports',
     ],
   },

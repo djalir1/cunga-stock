@@ -9,7 +9,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Index = () => {
   const { role } = useAuth(); // 2. Get role
-  const isKeeper = role === 'storekeeper';
+  // Admins and storekeepers can mutate; supervisors are view-only.
+  const canEdit = role === 'admin' || role === 'storekeeper';
 
   const {
     categories,
@@ -42,7 +43,7 @@ const Index = () => {
             </div>
             
             {/* Show a badge if in View Only mode */}
-            {!isKeeper && (
+            {!canEdit && (
               <div className="hidden md:block">
                 <span className="bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full border border-amber-200">
                   Supervisor Mode (View Only)
@@ -57,7 +58,7 @@ const Index = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-8">
           
-          {!isKeeper && (
+          {!canEdit && (
             <Alert className="bg-amber-50 border-amber-200 text-amber-800">
               <ShieldAlert className="h-4 w-4" />
               <AlertTitle>View Only</AlertTitle>
@@ -74,16 +75,16 @@ const Index = () => {
                 uniforms={uniforms}
                 categories={categories}
                 // Only pass functions if they are a keeper
-                onAddUniform={isKeeper ? addUniform : undefined}
-                onUpdateUniform={isKeeper ? updateUniform : undefined}
-                onDeleteUniform={isKeeper ? deleteUniform : undefined}
-                onAddCategory={isKeeper ? addCategory : undefined}
-                onDeleteCategory={isKeeper ? deleteCategory : undefined}
+                onAddUniform={canEdit ? addUniform : undefined}
+                onUpdateUniform={canEdit ? updateUniform : undefined}
+                onDeleteUniform={canEdit ? deleteUniform : undefined}
+                onAddCategory={canEdit ? addCategory : undefined}
+                onDeleteCategory={canEdit ? deleteCategory : undefined}
               />
             </div>
             <div className="lg:col-span-1">
               {/* Hide the Issuance Form entirely for Supervisors */}
-              {isKeeper ? (
+              {canEdit ? (
                 <IssuanceForm
                   uniforms={uniforms}
                   onIssue={issueUniform}
@@ -102,8 +103,8 @@ const Index = () => {
           <IssuedRecordsTable
             records={issuedUniforms}
             // If they aren't a keeper, don't pass the update/delete functions
-            onUpdate={isKeeper ? updateIssuedUniform : undefined}
-            onDelete={isKeeper ? deleteIssuedUniform : undefined}
+            onUpdate={canEdit ? updateIssuedUniform : undefined}
+            onDelete={canEdit ? deleteIssuedUniform : undefined}
           />
 
           {/* Reports - Always visible to both roles */}
